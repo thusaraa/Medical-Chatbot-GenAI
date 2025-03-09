@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot - Brave Coder</title>
+
+    <!-- Corrected CSS Link for Flask -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+</head>
+<body>
+    <div class="wrapper">
+        <div class="title">Simple Chatbot</div>
+        <div class="box">
+            <div class="item">
+                <div class="icon">
+                    <i class="fa fa-user"></i>
+                </div>
+                <div class="msg">
+                    <p>Hello everyone, How can I help with your medical questions today?</p>
+                </div>
+            </div>
+
+            <div class="item right">
+                <div class="msg">
+                </div>
+            </div>
+        </div>
+        
+        <div class="typing-area">
+            <div class="input-field">
+                <input type="text" placeholder="Type your message" required>
+                <button>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript to Send & Receive Messages -->
+    <script>
+        document.querySelector("button").addEventListener("click", function() {
+            let userInput = document.querySelector("input").value;
+            if (userInput.trim() === "") return;
+
+            fetch("/get", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "msg=" + encodeURIComponent(userInput)
+            })
+            .then(response => response.text())
+            .then(data => {
+                let box = document.querySelector(".box");
+                let userMessage = `<div class="item right"><div class="msg"><p>${userInput}</p></div></div>`;
+                let botMessage = `<div class="item"><div class="icon"><i class="fa fa-user"></i></div><div class="msg"><p>${data}</p></div></div>`;
+
+                box.innerHTML += userMessage + botMessage;
+                document.querySelector("input").value = "";
+                box.scrollTop = box.scrollHeight;
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    </script>
+</body>
+</html>
