@@ -43,4 +43,4 @@ open up localhost
 - GPT
 - Pinecone
 
-# SCZ0BZq-jqY
+#### SCZ0BZq-jqY
