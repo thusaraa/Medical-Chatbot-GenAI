@@ -42,3 +42,5 @@ open up localhost
 - Flask
 - GPT
 - Pinecone
+
+# SCZ0BZq-jqY
