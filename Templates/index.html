@@ -3,64 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot - Brave Coder</title>
+    <title>MediBot - AI Medical Assistant</title>
 
-    <!-- Corrected CSS Link for Flask -->
+    <!-- CSS Link for Flask -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="wrapper">
-        <div class="title">Medical Chatbot</div>
-        <div class="box">
-            <div class="item">
-                <div class="icon">
-                    <i class="fa fa-user"></i>
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="header-content">
+                <div class="bot-avatar">
+                    <i class="fas fa-stethoscope"></i>
                 </div>
-                <div class="msg">
-                    <p>Hello everyone, How can I help with your medical questions today?</p>
+                <div class="header-info">
+                    <h2>MediBot</h2>
+                    <p>AI Medical Assistant</p>
                 </div>
-            </div>
-
-            <div class="item right">
-                <div class="msg">
+                <div class="header-status">
+                    <div class="status-indicator online"></div>
+                    <span>Online</span>
                 </div>
             </div>
         </div>
-        
-        <div class="typing-area">
-            <div class="input-field">
-                <input type="text" placeholder="Type your message" required>
-                <button>Send</button>
+
+        <!-- Chat Messages Area -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-avatar">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>Hello! I'm MediBot, your AI medical assistant. I'm here to help answer your medical questions and provide health information. How can I assist you today?</p>
+                    </div>
+                    <div class="message-time">Just now</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-action-btn" onclick="sendQuickMessage('What are the symptoms of diabetes?')">
+                <i class="fas fa-heartbeat"></i>
+                <span>Diabetes Symptoms</span>
+            </button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How to treat a headache?')">
+                <i class="fas fa-head-side-cough"></i>
+                <span>Headache Relief</span>
+            </button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('What is hypertension?')">
+                <i class="fas fa-heart"></i>
+                <span>Hypertension</span>
+            </button>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="messageInput" placeholder="Type your medical question here..." autocomplete="off">
+                    <button id="sendButton" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-actions">
+                    <button class="action-btn" title="Voice Input">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="action-btn" title="Attach File">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript to Send & Receive Messages -->
-    <script>
-        document.querySelector("button").addEventListener("click", function() {
-            let userInput = document.querySelector("input").value;
-            if (userInput.trim() === "") return;
+    <!-- Loading Indicator -->
+    <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+        <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <span>MediBot is thinking...</span>
+    </div>
 
+    <!-- JavaScript -->
+    <script>
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatMessages = document.getElementById('chatMessages');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // Send message function
+        function sendMessage(message) {
+            if (!message.trim()) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            
+            // Show loading
+            showLoading();
+
+            // Send to backend
             fetch("/get", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "msg=" + encodeURIComponent(userInput)
+                body: "msg=" + encodeURIComponent(message)
             })
             .then(response => response.text())
             .then(data => {
-                let box = document.querySelector(".box");
-                let userMessage = `<div class="item right"><div class="msg"><p>${userInput}</p></div></div>`;
-                let botMessage = `<div class="item"><div class="icon"><i class="fa fa-user"></i></div><div class="msg"><p>${data}</p></div></div>`;
-
-                box.innerHTML += userMessage + botMessage;
-                document.querySelector("input").value = "";
-                box.scrollTop = box.scrollHeight;
+                hideLoading();
+                addMessage(data, 'bot');
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => {
+                hideLoading();
+                addMessage("Sorry, I'm having trouble connecting right now. Please try again.", 'bot');
+                console.error("Error:", error);
+            });
+        }
+
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <p>${text}</p>
+                        </div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <p>${text}</p>
+                        </div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Quick message function
+        function sendQuickMessage(message) {
+            messageInput.value = message;
+            sendMessage(message);
+        }
+
+        // Show/hide loading
+        function showLoading() {
+            loadingIndicator.style.display = 'flex';
+            scrollToBottom();
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            if (message.trim()) {
+                sendMessage(message);
+                messageInput.value = '';
+            }
         });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = messageInput.value;
+                if (message.trim()) {
+                    sendMessage(message);
+                    messageInput.value = '';
+                }
+            }
+        });
+
+        // Auto-focus input
+        messageInput.focus();
     </script>
 </body>
 </html>
